@@ -1,0 +1,13 @@
+﻿@page "/"
+@using Blazoop.Source.NodeContexts
+
+<div id="index" class="body-space">
+    <Surrogate ElementContext=@RootNode.Node></Surrogate>
+</div>
+
+@code {
+    
+    [Inject]
+    public RootNode RootNode { get; set; }
+    
+}

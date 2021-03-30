@@ -1,0 +1,55 @@
+﻿@using Blazoop.ExternalDeps.Classes.Management
+@using Blazoop.Source
+@using Blazoop.Source.ElementContexts
+@using Blazoop.Source.NodeContexts
+@using Blazoop.Source.Operations
+@Self()
+@code {
+
+    [Parameter]
+    public LinkMember ElementContext { get; set; }
+    
+    [Parameter]
+    public RenderFragment ChildContent { get; set; }
+
+    protected override void OnInitialized()
+    {
+        ((ElementContext) ElementContext.Value).SurrogateReference = this;
+        
+        base.OnInitialized();
+    }
+
+    public RenderFragment Self()
+    {
+        ElementContext SelfContext = ElementContext.Value as ElementContext;
+        SelfContext.WithAttribute("style", out StyleContext styleContext);
+        
+        Console.WriteLine("rendering");
+        return @<div
+                    id=@SelfContext.Id
+                    class=@SelfContext.cssClass
+                    style=@styleContext.GetRenderOutput() @ref=@SelfContext.ElementReference @onmousedown:preventDefault=@SelfContext.PreventDefaults.Contains("onmousedown") @onmousedown:stopPropagation=@SelfContext.StopPropagations.Contains("onmousedown") @onmousedown=@SelfContext.GetEvent("onmousedown") @onmouseup:preventDefault=@SelfContext.PreventDefaults.Contains("onmouseup") @onmouseup:stopPropagation=@SelfContext.StopPropagations.Contains("onmouseup") @onmouseup=@SelfContext.GetEvent("onmouseup") @onmousemove:preventDefault=@SelfContext.PreventDefaults.Contains("onmousemove") @onmousemove:stopPropagation=@SelfContext.StopPropagations.Contains("onmousemove") @onmousemove=@SelfContext.GetEvent("onmousemove") @onclick:preventDefault=@SelfContext.PreventDefaults.Contains("onclick") @onclick:stopPropagation=@SelfContext.StopPropagations.Contains("onclick") @onclick=@SelfContext.GetEvent("onclick") @onkeydown:preventDefault=@SelfContext.PreventDefaults.Contains("onkeydown") @onkeydown:stopPropagation=@SelfContext.StopPropagations.Contains("onkeydown") @onkeydown=@SelfContext.GetEvent("onkeydown") @onkeyup:preventDefault=@SelfContext.PreventDefaults.Contains("onkeyup") @onkeyup:stopPropagation=@SelfContext.StopPropagations.Contains("onkeyup") @onkeyup=@SelfContext.GetEvent("onkeyup") @onkeypress:preventDefault=@SelfContext.PreventDefaults.Contains("onkeypress") @onkeypress:stopPropagation=@SelfContext.StopPropagations.Contains("onkeypress") @onkeypress=@SelfContext.GetEvent("onkeypress") @ondrag:preventDefault=@SelfContext.PreventDefaults.Contains("ondrag") @ondrag:stopPropagation=@SelfContext.StopPropagations.Contains("ondrag") @ondrag=@SelfContext.GetEvent("ondrag") @ondragstart:preventDefault=@SelfContext.PreventDefaults.Contains("ondragstart") @ondragstart:stopPropagation=@SelfContext.StopPropagations.Contains("ondragstart") @ondragstart=@SelfContext.GetEvent("ondragstart") @ondragend:preventDefault=@SelfContext.PreventDefaults.Contains("ondragend") @ondragend:stopPropagation=@SelfContext.StopPropagations.Contains("ondragend") @ondragend=@SelfContext.GetEvent("ondragend") @ondragover:preventDefault=@SelfContext.PreventDefaults.Contains("ondragover") @ondragover:stopPropagation=@SelfContext.StopPropagations.Contains("ondragover") @ondragover=@SelfContext.GetEvent("ondragover") @ondrop:preventDefault=@SelfContext.PreventDefaults.Contains("ondrop") @ondrop:stopPropagation=@SelfContext.StopPropagations.Contains("ondrop") @ondrop=@SelfContext.GetEvent("ondrop") 
+                    onscroll=@(SelfContext.PreventDefaults.Contains("onwheel")?"event.preventDefault()":"")
+                    @onwheel=@SelfContext.GetEvent("onwheel")
+                    >
+                   @Value
+                   @foreach (var a in ElementContext.GetChildren())
+                   {
+                       <Surrogate ElementContext=@(a)/>
+                   }
+               </div>;
+    }
+    
+    public Action ChangeState => StateHasChanged;
+    
+    public RenderFragment Value => (ElementContext.Value as ElementContext)?.HTML;
+
+}
+
+@code {
+    public static RenderFragment CreateElement(string html)
+    {
+        return @<div>@html</div>;
+    }
+
+}

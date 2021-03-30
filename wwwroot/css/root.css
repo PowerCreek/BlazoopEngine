@@ -1,0 +1,29 @@
+﻿.body-space{
+    width: 100%;
+    height: 100%;
+    position: absolute;
+}
+
+.window-container{
+    position: relative;;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: gray;
+    overflow: hidden;
+    cursor: unset;
+    user-select: none;
+}
+
+.window-context{
+    --margin-top: 0px;
+    position: absolute;
+    background-color: #ff0000;
+    display: grid;
+    grid-template-rows: 20px min-content auto;
+    border-width: 0px 4px 4px;
+    border-color: black;
+    border-style: solid;
+    user-select: none;
+}
