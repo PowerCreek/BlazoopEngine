@@ -29,6 +29,9 @@ namespace Blazoop.Source.ElementContexts
             
             NodeBase = nodeBase;
             Add("node", ElementNode = new LinkMember(this));
+
+            WithAttribute("draggable", out AttributeString drag);
+            drag.Value = "false";
             
             WindowingService = nodeBase.ServiceData.OperationManager.GetOperation<WindowingService>();
             WindowingService.ContainerContext = this;
@@ -56,9 +59,15 @@ namespace Blazoop.Source.ElementContexts
                 sliderStyle.WithStyle(StyleOperator, Slider, 
                     ("margin-top",$"{position.Y}px"));
             };
-    
-            PreventDefaults.Add("onwheel");
-            StopPropagations.Add("onmousemove");
+            
+            string[] events = { 
+            };
+            
+            StopPropagations.AddRange(events);
+            StopPropagations.Add("onwheel");
+
+            PreventDefaults.Add("ondragover");
+            PreventDefaults.Add("ondrop");
 
             AddEvent("onmousedown", WindowingService.ContainerMouseDown);
             AddEvent("onmousemove", WindowingService.ContainerMouseMove);
@@ -66,8 +75,18 @@ namespace Blazoop.Source.ElementContexts
             AddEvent("onmouseleave", WindowingService.ContainerMouseLeave);
             AddEvent("ondragend", WindowingService.ContainerMouseUp);
             AddEvent("onwheel", WindowingService.ContainerWheel);
+            AddEvent("ondrop", WindowingService.OnContainerTabDropped);
+            AddEvent("ondragover", a=>{  });
             
             var hold = WindowingService.CreateWindow;
+
+            for (int i = 0; i < 4; i++)
+            {
+                var tab = WindowingService.CreateTab();
+                tab.TabContext = new TabContext(nodeBase, tab) { };
+                tab.TabContext.SetHtml($"TAB {i}");
+                WindowingService.AddTabToWindow(hold, tab);
+            }
         }
         
         public void SetCursor(string cursor)

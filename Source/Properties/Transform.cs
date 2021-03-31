@@ -22,7 +22,7 @@ namespace Blazoop.Source.Properties
                 set
                 {
                     if (_size.Equals(value)) return;
-                    _size = value;
+                    _size = new Size(value.Width, value.Height);
                     _size.PropertyChanged += (a, b) => { OnResize?.Invoke(this, _size); };
                     OnResize?.Invoke(this, _size);
                 }
@@ -40,7 +40,7 @@ namespace Blazoop.Source.Properties
                 set
                 {
                     if (_position.Equals(value)) return;
-                    _position = value;
+                    _position = new Position(value.X, value.Y);
                     _position.PropertyChanged += (a, b) =>
                     {
                         OnMove?.Invoke(this, _position);

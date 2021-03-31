@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using Blazoop.ExternalDeps.Classes;
 using Blazoop.ExternalDeps.Classes.Management;
 using Blazoop.Source.NodeContexts;
@@ -74,11 +76,17 @@ namespace Blazoop.Source.ElementContexts
                     ("height", $"{Transform.Size.Height}px"));
             };
             
+            PreventDefaults.Add("onfocus");
+            PreventDefaults.Add("ondragover");
+            PreventDefaults.Add("ondrop");
+            StopPropagations.Add("ondragover");
+            StopPropagations.Add("ondrop");
+            
             AddEvent("onmousedown", OnMouseDown);
             AddEvent("onmouseup", WindowingService.WindowResizeUp);
             AddEvent("onmousemove", OnMouseMove);
             AddEvent("onmouseleave", OnMouseLeave);
-            //AddEvent("ondrop", OnDrop);
+            AddEvent("ondrop", OnTabWindowDropped);
             AddEvent("ondragover", a=>{});
         }
 
@@ -112,6 +120,7 @@ namespace Blazoop.Source.ElementContexts
         
         public void OnMouseDown(dynamic args)
         {
+            Console.WriteLine("down");
             WindowingService.WindowToFront(this);
             WindowingService.WindowMouseDown(args, this);
         }
@@ -124,6 +133,17 @@ namespace Blazoop.Source.ElementContexts
         public void OnMouseLeave(dynamic args)
         {
             WindowingService.WindowMouseLeave(args);
+        }
+
+        public void AddTabToWindow(TabData tab)
+        {
+            
+            TabSection.ElementNode.Add(tab.TabContext.ElementNode);
+        }
+
+        public void OnTabWindowDropped(object args)
+        {
+            WindowingService.OnTabWindowDrop(args, this);
         }
     }
 }

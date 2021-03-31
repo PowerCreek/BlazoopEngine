@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Blazoop.ExternalDeps.Classes.Management;
 using Blazoop.ExternalDeps.Classes.Management.Operations;
 using Blazoop.Source.ElementContexts;
 using Blazoop.Source.Properties.Vector;
@@ -26,6 +27,7 @@ namespace Blazoop.Source.Operations
             TabService = new TabService();
         }
 
+
         public WindowContext CreateWindow
         {
             get
@@ -40,7 +42,7 @@ namespace Blazoop.Source.Operations
 
         public void RemoveWindow(WindowContext context)
         {
-            WindowContextMap.Add(context, context);
+            WindowContextMap.Remove(context);
             WindowRenderOrder.Remove(context);
             context.ElementNode.Pop();
             ContainerContext.SurrogateReference?.ChangeState();
@@ -60,18 +62,54 @@ namespace Blazoop.Source.Operations
             int index = 1;
             foreach (var item in WindowRenderOrder.Where(item => item != context))
             {
-                item.WithAttribute("Style", out StyleContext styleContext);
-                styleContext.WithStyle(context.StyleOperator, item, ("z-index",$"{index++}"));
+                item.WithAttribute("style", out StyleContext styleContext);
+                styleContext.WithStyle(item.StyleOperator, item, 
+                    ("z-index",$"{index++}"));
             }
 
             WindowRenderOrder.Add(context);
-            context.WithAttribute("Style", out StyleContext styleContext2);
-            styleContext2.WithStyle(context.StyleOperator, context, ("z-index",$"{index}"));
+            context.WithAttribute("style", out StyleContext styleContext2);
+            styleContext2.WithStyle(context.StyleOperator, context, 
+                ("z-index",$"{index}"));
+        }
+
+        public TabData CreateTab() => TabService.CreateTab();
+
+        public void AddTabToWindow(WindowContext context, TabData tab)
+        {
+            if(TabService.ObjectTabMap[context] == tab.TabGroup) return;
+            TabService.AddTabToGroup(TabService.ObjectTabMap[context], tab);
+            tab.TabContext.ElementNode.Pop();
+            context.TabSection.ElementNode.Add(tab.TabContext.ElementNode);
+            //context.ContentPane.ElementNode.Add(tab.Content.ElementNode);
+            UpdateTabs(TabService.ObjectTabMap[context]);
+        }
+
+        public void UpdateTabs(string group)
+        {
+            var tabs = TabService.TabGroupMap[group];
+            var lastTab = tabs.Order.LastOrDefault();
+            SelectTab(lastTab);
+        }
+
+        public void RemoveTabFromWindow(TabData tab)
+        {
+            string previousGroup = tab.TabGroup;
+            
+            TabService.AddTabToGroup(TabService.UNJOINED, tab);
+            ((ElementContext)tab.TabContext.ElementNode.Parent.Value).SurrogateReference.ChangeState();
+            tab.TabContext.ElementNode.Pop();
+            
+            UpdateTabs(previousGroup);
+            //((ElementContext)tab.Content.ElementNode.Parent.Value).SurrogateReference.ChangeState();
+        }
+
+        public void SelectTab(TabData tab)
+        {
+            if(tab is not null) TabService.SelectTab(tab);
         }
         
         //REGION//REGION//REGION//REGION
-        
-        
         
         public void ContainerWheel(dynamic args)
         {
@@ -126,6 +164,105 @@ namespace Blazoop.Source.Operations
         public void ContainerMouseDown(dynamic args)
         {
             LeftMouseDown = true;
+        }
+        
+        public void OnContainerTabDropped(dynamic args)
+        {
+            if (TabDragData is null) return;
+            
+            WindowContext currentWindow = TabService.ObjectTabMap.FirstOrDefault(e=>e.Value==TabDragData.TabGroup).Key as WindowContext;
+            
+            WindowContext createdWindow = null;
+            Position cPos = currentWindow.Transform.Position;
+            
+            if (TabService.TabGroupMap[TabDragData.TabGroup].Group.Count > 1)
+            {
+                string oldGroup = TabDragData.TabGroup;
+                createdWindow = CreateWindow;
+                createdWindow.Transform.Size = currentWindow.Transform.Size;
+                //Console.WriteLine(currentWindow.Transform.Size.Width+":"+currentWindow.Transform.Size.Height);
+                currentWindow = createdWindow;
+                AddTabToWindow(createdWindow, TabDragData);
+                UpdateTabs(oldGroup);
+            }
+            
+            Position changePos = ConvertMousePosition(args);
+            
+            changePos.X -= Math.Abs(cPos.X - WindowStartPos.X);
+            changePos.Y -= Math.Abs(cPos.Y - WindowStartPos.Y);
+            
+            currentWindow.Transform.Position = changePos;
+            createdWindow?.SurrogateReference?.ChangeState();
+
+            WindowToFront(currentWindow);
+            EndTabDrop();
+        }
+
+        public void OnTabWindowDrop(dynamic args, WindowContext windowContext)
+        {
+            if (TabDragData is null || TabDragData.TabGroup == TabService.ObjectTabMap[windowContext]) return;
+
+            string oldGroup = TabDragData.TabGroup;
+            
+            WindowContext currentWindow = TabService.ObjectTabMap.FirstOrDefault(e=>e.Value==TabDragData.TabGroup).Key as WindowContext;
+
+
+            AddTabToWindow(windowContext, TabDragData);
+            UpdateTabs(oldGroup);
+            UpdateTabs(TabDragData.TabGroup);
+
+            windowContext.TabSection.SurrogateReference?.ChangeState();
+            currentWindow.TabSection.SurrogateReference?.ChangeState();
+            
+            Console.WriteLine(TabDragData.TabGroup+":"+oldGroup);
+            WindowToFront(windowContext);
+            
+            if (TabService.TabGroupMap[oldGroup].Group.Count is 0)
+                RemoveWindow(currentWindow);
+            
+            EndTabDrop();
+        }
+
+        public void OnTabTabDrop(DragEventArgs args, TabData tabTarget)
+        {
+            if (tabTarget == TabDragData) return;
+            WindowContext targetWindow =
+                TabService.ObjectTabMap.FirstOrDefault(e => e.Value == tabTarget.TabGroup).Key as WindowContext;
+
+            WindowContext currentWindow =
+                TabService.ObjectTabMap.FirstOrDefault(e => e.Value == TabDragData.TabGroup).Key as WindowContext;
+            string oldGroup = TabDragData.TabGroup;
+            AddTabToWindow(targetWindow, TabDragData);
+
+            var hold = TabService.TabGroupMap[tabTarget.TabGroup].Group;
+
+            bool minRange = args.OffsetX <= 12;
+
+            if (hold[1] == TabDragData && hold[0] == tabTarget)
+            {
+                minRange = true;
+            }else if (hold[1] == tabTarget && hold[0] == TabDragData)
+            {
+                minRange = false;
+            }
+            else if(hold[^1] == tabTarget && hold[^2]==TabDragData)
+            {
+                minRange = false;
+            }
+            else if(hold[^1] == TabDragData && hold[^2]==tabTarget)
+            {
+                minRange = true;
+            }
+
+            TabService.InsertTab(TabDragData, tabTarget, minRange);
+            
+            UpdateTabs(oldGroup);
+            UpdateTabs(tabTarget.TabGroup);
+            
+            targetWindow.TabSection.SurrogateReference?.ChangeState();
+            currentWindow.TabSection.SurrogateReference?.ChangeState();
+
+            if (TabService.TabGroupMap[oldGroup].Group.Count is 0) RemoveWindow(currentWindow);
         }
         
         public void ContainerMouseMove(dynamic args)
@@ -276,7 +413,6 @@ namespace Blazoop.Source.Operations
         
         public void WindowMouseMove(dynamic args, WindowContext windowContext)
         {
-            
             if (LeftMouseDown) return;
             if (args.Buttons != 0) return;
             DirX = 0;
@@ -359,19 +495,29 @@ namespace Blazoop.Source.Operations
 
         public void EndTabDrop()
         {
+            
+            TabDragData = null;
+            LeftMouseDown = false;
+        }
+        
+        public void TabDragEnd(dynamic args, TabData tabData)
+        {
             TabDragData = null;
         }
 
-        
-        public void TabDragEnd(dynamic args, TabData tabData) => TabDragData = null;
 
-        //REGION//REGION//REGION//REGION
-
-        public bool IsMouseOverTabGroup = false; 
-        public void TabGroupMouseMove(object args)
+        public void TabMouseDown(dynamic args, TabData tabdata)
         {
-            IsMouseOverTabGroup = true;
+
+            int xTrim = 24 - (int) args.OffsetX;
+            /*
+            WindowStartPos = new Position(
+                tabdata.WindowSource.Transform.Position.X - xTrim,
+                tabdata.WindowSource.Transform.Position.Y - 34);
+                */
         }
+        
+        //REGION//REGION//REGION//REGION
     }
     
 }

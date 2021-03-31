@@ -23,14 +23,13 @@ namespace Blazoop.Source.ElementContexts
                 ("place-self", "stretch"),
                 ("display", "grid"),
                 ("grid-auto-columns", "min-content"),
+                ("grid-template-areas", "\"\""),
                 ("overflow", "hidden"),
                 ("grid-auto-flow", "column"),
                 ("user-select", "none"));
-
+            
             WithAttribute("draggable", out AttributeString drag);
             drag.Value = "false";
-            
-            SetHtml("what");
         }
     }
 }

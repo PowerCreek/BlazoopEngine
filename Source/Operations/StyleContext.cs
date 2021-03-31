@@ -58,6 +58,7 @@ namespace Blazoop.Source.Operations
             params (string, string)[] styles)
         {
             foreach (var (key, value) in styles) WithStyle(styleOperator, elementContext, key, value);
+            
             CreateOutput();
         }
 

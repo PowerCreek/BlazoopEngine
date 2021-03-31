@@ -28,6 +28,7 @@
         
         Console.WriteLine("rendering");
         return @<div
+                    @key=@SelfContext.Id
                     id=@SelfContext.Id
                     class=@SelfContext.cssClass
                     style=@styleContext.GetRenderOutput() @ref=@SelfContext.ElementReference 
@@ -78,15 +79,20 @@
                     ondragend:stopPropagation=@SelfContext.StopPropagations.Contains("ondragend") 
                     ondragend=@SelfContext.GetEvent("ondragend") 
                     
-                    ondragover:preventDefault=@SelfContext.PreventDefaults.Contains("ondragover") 
-                    ondragover:stopPropagation=@SelfContext.StopPropagations.Contains("ondragover") 
-                    ondragover=@SelfContext.GetEvent("ondragover") 
+                    @ondragover:preventDefault=@SelfContext.PreventDefaults.Contains("ondragover") 
+                    @ondragover:stopPropagation=@SelfContext.StopPropagations.Contains("ondragover") 
+                    @ondragover=@SelfContext.GetEvent("ondragover") 
                     
-                    ondrop:preventDefault=@SelfContext.PreventDefaults.Contains("ondrop") 
-                    ondrop:stopPropagation=@SelfContext.StopPropagations.Contains("ondrop") 
-                    ondrop=@SelfContext.GetEvent("ondrop") 
+                    @ondrop:preventDefault=@SelfContext.PreventDefaults.Contains("ondrop") 
+                    @ondrop:stopPropagation=@SelfContext.StopPropagations.Contains("ondrop") 
+                    @ondrop=@SelfContext.GetEvent("ondrop") 
                     
-                    onscroll=@(SelfContext.PreventDefaults.Contains("onwheel")?"event.preventDefault()":"")
+                    onfocus:preventDefault=@SelfContext.PreventDefaults.Contains("onfocus") 
+                    onfocus:stopPropagation=@SelfContext.StopPropagations.Contains("onfocus") 
+                    onfocus=@SelfContext.GetEvent("onfocus") 
+                    
+                    @onscroll:preventDefault=@SelfContext.PreventDefaults.Contains("onwheel")
+                    
                     
                     @onwheel=@SelfContext.GetEvent("onwheel")
                     >
