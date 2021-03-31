@@ -77,7 +77,6 @@ namespace Blazoop.Source.Operations
 
                 StyleMap[key] = value;
             }
-            
         }
 
         public string CreateOutput()

@@ -34,7 +34,6 @@ namespace Blazoop.Source.ElementContexts
             WindowingService.ContainerContext = this;
             StyleOperator = nodeBase.ServiceData.OperationManager.GetOperation<StyleOperator>();
             
-            
             WithAttribute("style", out StyleContext styleContext);
             styleContext.WithStyle(StyleOperator, this,
                 ("background-color", "red"),
@@ -59,10 +58,26 @@ namespace Blazoop.Source.ElementContexts
             };
     
             PreventDefaults.Add("onwheel");
-            AddEvent("onwheel", WindowingService.ContainerWheel);
+            StopPropagations.Add("onmousemove");
 
-            var hold = WindowingService.CreateWindow;
+            AddEvent("onmousedown", WindowingService.ContainerMouseDown);
+            AddEvent("onmousemove", WindowingService.ContainerMouseMove);
+            AddEvent("onmouseup", WindowingService.ContainerMouseUp);
+            AddEvent("onmouseleave", WindowingService.ContainerMouseLeave);
+            AddEvent("ondragend", WindowingService.ContainerMouseUp);
+            AddEvent("onwheel", WindowingService.ContainerWheel);
             
+            var hold = WindowingService.CreateWindow;
+        }
+        
+        public void SetCursor(string cursor)
+        {
+            WithAttribute("Style", out StyleContext styleContext);
+            styleContext.Valid = true;
+            styleContext.WithStyle(StyleOperator,
+                this,
+                ("cursor", cursor)
+            );
         }
     }
 }

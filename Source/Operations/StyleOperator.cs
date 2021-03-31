@@ -23,7 +23,6 @@ namespace Blazoop.Source.Operations
 
         public void SetStyle(ElementReference elem, string key, string value)
         {
-            Console.WriteLine("interop");
             JsRuntime.InvokeVoidAsync("SetStylesByReference", elem, key, value);
         }
 

@@ -25,7 +25,7 @@ namespace Blazoop.Source.Properties.Vector
             return other != null && values.SequenceEqual(other);
         }
 
-        public event PropertyChangedEventHandler? PropertyChanged;
+        public event PropertyChangedEventHandler PropertyChanged;
 
         [NotifyPropertyChangedInvocator]
         protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)

@@ -1,4 +1,5 @@
-﻿using Blazoop.ExternalDeps.Classes;
+﻿using System;
+using Blazoop.ExternalDeps.Classes;
 using Blazoop.ExternalDeps.Classes.Management;
 using Blazoop.Source.NodeContexts;
 using Blazoop.Source.Operations;
@@ -28,68 +29,101 @@ namespace Blazoop.Source.ElementContexts
             Size = new Size(200,400)
         };
         
-        public TitlebarContext Titlebar { get; }
-        public ElementContext TabSection { get; }
-        public ElementContext ContentPane { get; }
+        public TitlebarContext Titlebar { get; set; }
+        public TabSectionContext TabSection { get; set;}
+        public ContentPaneContext ContentPane { get; set;}
         
         public LinkMember ElementNode { get; }
+        
+        public WindowingService WindowingService { get; }
         
         public WindowContext(IRootElement nodeBase) : base($"Window_{nodeBase.NodeBase.Id}_")
         {
 
+            WindowingService = nodeBase.ServiceData.OperationManager.GetOperation<WindowingService>();
             StyleOperator = nodeBase.ServiceData.OperationManager.GetOperation<StyleOperator>();
             
             Add("node", ElementNode = new LinkMember(this));
             
-            Titlebar = new TitlebarContext(nodeBase);
-            ElementNode.Add(Titlebar.ElementNode);
-            
-            TabSection = new ElementContext($"Tabs_{nodeBase.NodeBase.Id}");
-            ContentPane = new ElementContext($"Content_{nodeBase.NodeBase.Id}");
+            InitTitlebar(nodeBase);
+            InitTabSection(nodeBase);
+            InitContentPane(nodeBase);
 
             cssClass = "window-context";
             
             WithAttribute("style", out StyleContext styleContext);
             styleContext.WithStyle(StyleOperator, this, 
                 ("position","absolute"), 
-                ("top",$"{Transform.Position.X}px"),
-                ("left",$"{Transform.Position.Y}px"),
+                ("left",$"{Transform.Position.X}px"),
+                ("top",$"{Transform.Position.Y}px"),
                 ("width",$"{Transform.Size.Width}px"),
                 ("height",$"{Transform.Size.Height}px"),
-                ("border","1px solid black"));
+                ("border","2px solid black"));
             
             Transform.OnMove = (transform, position) =>
             {
-                
+                styleContext.WithStyle(StyleOperator, this,
+                    ("left", $"{Transform.Position.X}px"),
+                    ("top", $"{Transform.Position.Y}px"));
             };
             
-            Transform.OnResize = (transform, position) =>
+            Transform.OnResize = (transform, size) =>
             {
+                styleContext.WithStyle(StyleOperator, this,
+                    ("width", $"{Transform.Size.Width}px"),
+                    ("height", $"{Transform.Size.Height}px"));
+            };
+            
+            AddEvent("onmousedown", OnMouseDown);
+            AddEvent("onmouseup", WindowingService.WindowResizeUp);
+            AddEvent("onmousemove", OnMouseMove);
+            AddEvent("onmouseleave", OnMouseLeave);
+            //AddEvent("ondrop", OnDrop);
+            AddEvent("ondragover", a=>{});
+        }
 
+        public void InitTitlebar(IRootElement nodeBase)
+        {
+            Titlebar = new TitlebarContext(nodeBase);
+            ElementNode.Add(Titlebar.ElementNode);
+            
+            Titlebar.TitlebarMouseDown = args=>
+            {
+                WindowingService.WindowTitleBarDown(args, this);
+            };
+            
+            Titlebar.TitlebarMouseUp = args=>
+            {
+                WindowingService.WindowTitleBarUp(args, this);
             };
         }
-    }
-
-    public class TitlebarContext : ElementContext, INodeElement
-    {        
-        public StyleOperator StyleOperator { get; }
-        public LinkMember ElementNode { get; }
         
-        public TitlebarContext(IRootElement nodeBase) : base($"Title_{nodeBase.NodeBase.Id}_")
+        public void InitTabSection(IRootElement nodeBase)
         {
-            StyleOperator = nodeBase.ServiceData.OperationManager.GetOperation<StyleOperator>();
-            Add("node", ElementNode = new LinkMember(this));
-            
-            WithAttribute("style", out StyleContext sliderStyle);
-            sliderStyle.WithStyle(StyleOperator, this, 
-                ("background-color","gray"),
-                ("top","0px"),
-                ("left","0px"),
-                ("place-self","stretch"),
-                ("position","relative"));
-
-            SetHtml("what");
+            TabSection = new TabSectionContext(nodeBase);
+            ElementNode.Add(TabSection.ElementNode);
+        }
+        
+        public void InitContentPane(IRootElement nodeBase)
+        {
+            ContentPane = new ContentPaneContext(nodeBase);
+            ElementNode.Add(ContentPane.ElementNode);
+        }
+        
+        public void OnMouseDown(dynamic args)
+        {
+            WindowingService.WindowToFront(this);
+            WindowingService.WindowMouseDown(args, this);
+        }
+        
+        public void OnMouseMove(dynamic args)
+        {
+            WindowingService.WindowMouseMove(args, this);
+        }
+        
+        public void OnMouseLeave(dynamic args)
+        {
+            WindowingService.WindowMouseLeave(args);
         }
     }
-    
 }
