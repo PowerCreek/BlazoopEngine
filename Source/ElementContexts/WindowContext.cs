@@ -120,7 +120,6 @@ namespace Blazoop.Source.ElementContexts
         
         public void OnMouseDown(dynamic args)
         {
-            Console.WriteLine("down");
             WindowingService.WindowToFront(this);
             WindowingService.WindowMouseDown(args, this);
         }

@@ -63,13 +63,11 @@ namespace Blazoop.Source.ElementContexts
                 string areas = string.Join(" ", TabGroupMap[tab.TabGroup].Group.Select(e=>e.TabContext.Id));
                 sectionStyle.WithStyle(section.StyleOperator, section,
                     ("grid-template-areas", $"\"{areas}\""));
-                Console.WriteLine(areas);
             }
         }
 
         public void InsertTab(TabData placing, TabData existing, bool before)
         {
-            Console.WriteLine(TabGroupMap[existing.TabGroup]);
             var hold = TabGroupMap[existing.TabGroup].Group;
             hold.Remove(placing);
             hold.Insert(hold.IndexOf(existing)+(before?0:1), placing);

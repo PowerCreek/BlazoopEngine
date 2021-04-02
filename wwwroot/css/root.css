@@ -35,6 +35,12 @@
     position: absolute;
 }
 
+.window-titlebar{
+    position: relative;
+    place-self: stretch;
+    background-color: black;
+}
+
 .window-context{
     --margin-top: 0px;
     position: absolute;

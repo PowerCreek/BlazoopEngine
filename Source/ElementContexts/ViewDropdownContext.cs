@@ -53,7 +53,6 @@ namespace Blazoop.Source.ElementContexts
                     tabs.Group.ForEach(e =>
                     {
                         ToolbarOperator.CreateItem(TestMenu2, e.Label);
-                        Console.WriteLine(e.Label);
                     });
                     
                     ToolbarOperator.OpenMenu(TestMenu2);

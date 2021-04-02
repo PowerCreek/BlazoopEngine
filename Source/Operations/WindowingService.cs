@@ -368,6 +368,7 @@ namespace Blazoop.Source.Operations
                 WindowDraggingWithResize = null;
                 
             ContainerContext.SetCursor("default");
+            LastCursor = "";
         }
 
         public int StartWheelPos = 0;
