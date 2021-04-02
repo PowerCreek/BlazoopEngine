@@ -32,15 +32,14 @@ namespace Blazoop.Source
             Prev?.SetNext(END.Next);
             END.Next?.SetPrev(Prev);
         }
-        
+
         private void Mend(LinkMember start, LinkMember finish, LinkMember node)
         {
             node.Pop();
-            
-            start.SetNext(node);
+            start?.SetNext(node);
             node.SetPrev(start);
-
-            finish.SetPrev(node.END);
+            
+            finish?.SetPrev(node.END);
             node.END.SetNext(finish);
         }
         
@@ -105,6 +104,7 @@ namespace Blazoop.Source
             Mend(END.Prev, END, node);
 
             node.Parent = this;
+            
         }
 
         public void SetNext(LinkMember node) => Next = node;

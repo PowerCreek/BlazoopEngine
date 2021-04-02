@@ -10,10 +10,29 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: gray;
+    background-color: lightgray;
     overflow: hidden;
     cursor: unset;
     user-select: none;
+    display: grid;
+    touch-action: none;
+}
+
+.window-container-toolbar{
+    top: 0px;
+    left: 0px;
+    width: 100%;
+    height: 100%;
+    background-color: #eee;
+    position: relative;
+    z-index: 2;
+}
+
+.window-container-slider{
+    z-index: 1;
+    top: 0px;
+    left: 0px;
+    position: absolute;
 }
 
 .window-context{
@@ -27,4 +46,69 @@
     border-style: solid;
     user-select: none;
     overflow: hidden;
+}
+
+.toolbar-menu-item:last-child{
+    border-bottom: 2px solid gray;
+}
+
+.toolbar-menu-item{
+    position: relative;
+    height: 100%;
+    background-color: white;
+    border-width: 1px 0px;
+    overflow:hidden;
+    text-align: left;
+    text-indent: 10px;
+    line-height: 2.2;
+    margin: 0px -2px;
+    z-index: 1;
+    align-items: center;
+    justify-items: center;
+}
+
+.toolbar-menu-item.vslim {
+    border-top: 2px solid black;
+    background-color: #eee;
+    height: 30px;
+    color: black;
+}
+
+.toolbar-menu-item:hover {
+    z-index: 5;
+    color: black;
+}
+
+.toolbar-menu-item div:first-child{
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+    justify-items: center;
+}
+
+
+.toolbar-menu-part{
+    color: #888;
+    display: grid;
+    place-self: stretch;
+    grid-auto-rows: min-content;
+    justify-items: stretch;
+    text-align: center;
+    box-sizing: border-box;
+    height: 40px;
+
+}
+
+.toolbar-menu-part>div:first-child{
+    height: 40px;    
+    box-sizing: border-box;
+    display: grid;
+    align-items: center;
+    margin-top: var(--down);
+}
+
+.toolbar-menu-part:hover{
+    --down: -2px;
+    background-color: #0a0a0a33;
+    border:2px solid gray;
 }

@@ -26,14 +26,17 @@
         SelfContext.WithAttribute("style", out StyleContext styleContext);
         SelfContext.WithAttribute("draggable", out AttributeString draggable);
         
-        Console.WriteLine("rendering");
         return @<div
-                    @key=@SelfContext.Id
+                    @key=@SelfContext.Key
                     id=@SelfContext.Id
                     class=@SelfContext.cssClass
                     style=@styleContext.GetRenderOutput() @ref=@SelfContext.ElementReference 
                     
                     draggable=@draggable.Value
+                    
+                    onmouseenter:preventDefault=@SelfContext.PreventDefaults.Contains("onmouseenter ") 
+                    onmouseenter:stopPropagation=@SelfContext.StopPropagations.Contains("onmouseenter") 
+                    onmouseenter=@SelfContext.GetEvent("onmouseenter") 
                     
                     onmousedown:preventDefault=@SelfContext.PreventDefaults.Contains("onmousedown") 
                     onmousedown:stopPropagation=@SelfContext.StopPropagations.Contains("onmousedown") 

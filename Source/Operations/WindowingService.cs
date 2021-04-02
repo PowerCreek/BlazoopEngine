@@ -73,14 +73,14 @@ namespace Blazoop.Source.Operations
                 ("z-index",$"{index}"));
         }
 
-        public TabData CreateTab() => TabService.CreateTab();
+        public TabData CreateTab<T>() where T: TabData, new() => TabService.CreateTab();
 
         public void AddTabToWindow(WindowContext context, TabData tab)
         {
             if(TabService.ObjectTabMap[context] == tab.TabGroup) return;
             TabService.AddTabToGroup(TabService.ObjectTabMap[context], tab);
-            tab.TabContext.ElementNode.Pop();
-            context.TabSection.ElementNode.Add(tab.TabContext.ElementNode);
+            tab.DisconnectTab();
+            tab.ConnectToWindow(context);
             //context.ContentPane.ElementNode.Add(tab.Content.ElementNode);
             UpdateTabs(TabService.ObjectTabMap[context]);
         }
@@ -96,9 +96,9 @@ namespace Blazoop.Source.Operations
         {
             string previousGroup = tab.TabGroup;
             
+            tab.DisconnectTab();
             TabService.AddTabToGroup(TabService.UNJOINED, tab);
             ((ElementContext)tab.TabContext.ElementNode.Parent.Value).SurrogateReference.ChangeState();
-            tab.TabContext.ElementNode.Pop();
             
             UpdateTabs(previousGroup);
             //((ElementContext)tab.Content.ElementNode.Parent.Value).SurrogateReference.ChangeState();
@@ -113,12 +113,14 @@ namespace Blazoop.Source.Operations
         
         public void ContainerWheel(dynamic args)
         {
+            if (LastCursor is not "") return;
+            
             int amount = - Math.Sign(args.DeltaY) * 25;
             
             ContainerContext.SliderTransform.Position.Y += amount;
             StartWheelPos += amount;
             
-            if (WindowDraggingWithTitlebar == null && WindowDraggingWithResize == null) return;
+            if (WindowDraggingWithTitlebar == null) return;
 
             if (WindowDraggingWithTitlebar != null)
             {
@@ -132,6 +134,8 @@ namespace Blazoop.Source.Operations
         ////////////////////////////////////////////////////////////////////////////////////////////////
         public WindowContext WindowDraggingWithTitlebar { get; set; }
         public WindowContext WindowDraggingWithResize { get; set; }
+        
+        private TabData TabDragData = null;
         public Position ScreenStartPos { get; set; }
         public Position CurrentScreenPos { get; set; }
         public Position BeforeScreenPos { get; set; }
@@ -145,7 +149,7 @@ namespace Blazoop.Source.Operations
             Position hold = new Position((int) args.ClientX, (int) args.ClientY);
 
             hold.X -= ContainerContext.SliderTransform.Position.X;
-            hold.Y -= ContainerContext.SliderTransform.Position.Y;
+            hold.Y -= ContainerContext.SliderTransform.Position.Y+ContainerContext.ToolbarTransform.Size.Height;
             
             return hold;
         }
@@ -214,7 +218,6 @@ namespace Blazoop.Source.Operations
             windowContext.TabSection.SurrogateReference?.ChangeState();
             currentWindow.TabSection.SurrogateReference?.ChangeState();
             
-            Console.WriteLine(TabDragData.TabGroup+":"+oldGroup);
             WindowToFront(windowContext);
             
             if (TabService.TabGroupMap[oldGroup].Group.Count is 0)
@@ -486,7 +489,6 @@ namespace Blazoop.Source.Operations
             }
         }
 
-        private TabData TabDragData = null;
         
         public void TabDragStart(dynamic args, TabData tabData)
         {
@@ -495,20 +497,23 @@ namespace Blazoop.Source.Operations
 
         public void EndTabDrop()
         {
-            
             TabDragData = null;
             LeftMouseDown = false;
+            WindowDraggingWithTitlebar = null;
+            WindowDraggingWithResize = null;
         }
         
         public void TabDragEnd(dynamic args, TabData tabData)
         {
+            WindowDraggingWithTitlebar = null;
+            WindowDraggingWithResize = null;
             TabDragData = null;
+            LeftMouseDown = false;
         }
 
 
         public void TabMouseDown(dynamic args, TabData tabdata)
         {
-
             int xTrim = 24 - (int) args.OffsetX;
             /*
             WindowStartPos = new Position(

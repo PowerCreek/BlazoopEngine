@@ -22,6 +22,7 @@ namespace Blazoop.Source.ElementContexts
         public IRootElement NodeBase { get; }
         public LinkMember SlideMember { get; }
         public Transform SliderTransform { get; }
+        public Transform ToolbarTransform { get; }
         
         public ContainerContext(IRootElement nodeBase) : base($"Container_{nodeBase.NodeBase.Id}_")
         {
@@ -36,19 +37,19 @@ namespace Blazoop.Source.ElementContexts
             WindowingService = nodeBase.ServiceData.OperationManager.GetOperation<WindowingService>();
             WindowingService.ContainerContext = this;
             StyleOperator = nodeBase.ServiceData.OperationManager.GetOperation<StyleOperator>();
+
+            int ToolbarHeight = 40;
             
             WithAttribute("style", out StyleContext styleContext);
             styleContext.WithStyle(StyleOperator, this,
-                ("background-color", "red"),
-                ("position", "relative"),
-                ("touch-action","none"));
+                ("grid-template-rows", "40px auto"));
 
+            var Toolbar = new ViewDropdownContext(nodeBase);
+            ElementNode.Add(Toolbar.ElementNode);
+            
             Slider = new ElementContext("Slider");
             Slider.WithAttribute("style", out StyleContext sliderStyle);
-            sliderStyle.WithStyle(StyleOperator, Slider, 
-                ("top","0px"),
-                ("left","0px"),
-                ("position","absolute"));
+            Slider.cssClass = "window-container-slider";
 
             SlideMember = new LinkMember(Slider);
             ElementNode.Add(SlideMember);
@@ -57,11 +58,22 @@ namespace Blazoop.Source.ElementContexts
             SliderTransform.OnMove = (transform1, position) =>
             {
                 sliderStyle.WithStyle(StyleOperator, Slider, 
-                    ("margin-top",$"{position.Y}px"));
+                    ("margin-top",$"{position.Y+ToolbarHeight}px"));
             };
             
-            string[] events = { 
+            ToolbarTransform = new Transform();
+            ToolbarTransform.OnResize = (transform, size) =>
+            {
+                styleContext.WithStyle(StyleOperator, this,
+                    ("grid-template-rows", $"{ToolbarHeight}px auto"));
+                
+                sliderStyle.WithStyle(StyleOperator, Slider, 
+                    ("margin-top",$"{SliderTransform.Position.Y+ToolbarHeight}px"));
             };
+
+            ToolbarTransform.Size.Height = ToolbarHeight;
+            
+            string[] events = { };
             
             StopPropagations.AddRange(events);
             StopPropagations.Add("onwheel");
@@ -78,15 +90,6 @@ namespace Blazoop.Source.ElementContexts
             AddEvent("ondrop", WindowingService.OnContainerTabDropped);
             AddEvent("ondragover", a=>{  });
             
-            var hold = WindowingService.CreateWindow;
-
-            for (int i = 0; i < 4; i++)
-            {
-                var tab = WindowingService.CreateTab();
-                tab.TabContext = new TabContext(nodeBase, tab) { };
-                tab.TabContext.SetHtml($"TAB {i}");
-                WindowingService.AddTabToWindow(hold, tab);
-            }
         }
         
         public void SetCursor(string cursor)
