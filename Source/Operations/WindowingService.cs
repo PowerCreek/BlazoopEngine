@@ -113,19 +113,41 @@ namespace Blazoop.Source.Operations
         
         public void ContainerWheel(dynamic args)
         {
+            
             if (LastCursor is not "") return;
-            
-            int amount = - Math.Sign(args.DeltaY) * 25;
-            
-            ContainerContext.SliderTransform.Position.Y += amount;
-            StartWheelPos += amount;
-            
+
+            int amount = -Math.Sign(args.DeltaY) * 25;
+
+            if (args.ShiftKey)
+            {
+                ContainerContext.SliderTransform.Position.X += amount;
+            }
+            else
+            {
+                ContainerContext.SliderTransform.Position.Y += amount;
+            }
+
+            if (args.ShiftKey)
+            {
+                StartWheelPos.X += amount;
+            }
+            else
+            {
+                StartWheelPos.Y += amount;
+            }
+
             if (WindowDraggingWithTitlebar == null) return;
 
             if (WindowDraggingWithTitlebar != null)
             {
-                WindowDraggingWithTitlebar.Transform.Position.Y = 
-                    WindowDraggingWithTitlebar.Transform.Position.Y + Math.Sign(args.DeltaY)*25;
+                var position = WindowDraggingWithTitlebar.Transform.Position;
+                if (args.ShiftKey)
+                {
+                    position.X += amount;
+                }else
+                {
+                    position.Y -= amount;
+                }
             }
         }
 
@@ -270,11 +292,13 @@ namespace Blazoop.Source.Operations
         
         public void ContainerMouseMove(dynamic args)
         {
+            
             if (CurrentScreenPos != null)
             {
                 //BeforeScreenPos = new((int) args.ScreenX, (int) args.ScreenY);
                 BeforeScreenPos = ConvertMousePosition(args);
-                BeforeScreenPos.Y += StartWheelPos;
+                BeforeScreenPos.Y += StartWheelPos.Y;
+                BeforeScreenPos.X += StartWheelPos.X;
                 DeltaPos = new(CurrentScreenPos.X - BeforeScreenPos.X, CurrentScreenPos.Y - BeforeScreenPos.Y);
             }
 
@@ -339,7 +363,7 @@ namespace Blazoop.Source.Operations
                     int nY = CurrentScreenPos.Y;
                     int nH = CurrentScreenPos.Y-changeY;
                     changeH = nH <= MIN_HEIGHT ? MIN_HEIGHT : nH;
-                    changeH -= StartWheelPos;
+                    changeH -= StartWheelPos.Y;
 
                     //changeH;
                 }
@@ -371,11 +395,12 @@ namespace Blazoop.Source.Operations
             LastCursor = "";
         }
 
-        public int StartWheelPos = 0;
+        public Position StartWheelPos = new Position();
         
         public void StartDragAction(dynamic args)
         {
-            StartWheelPos = 0;
+            StartWheelPos.X = 0;
+            StartWheelPos.Y = 0;
             CurrentScreenPos = ScreenStartPos = ConvertMousePosition(args);
         }
 

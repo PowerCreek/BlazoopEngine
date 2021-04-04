@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using Blazoop.ExternalDeps.Classes;
 using Blazoop.ExternalDeps.Classes.Management;
 using Blazoop.Source.NodeContexts;
@@ -29,14 +30,7 @@ namespace Blazoop.Source.ElementContexts
             
             WithAttribute("style", out StyleContext tabsStyle);
             tabsStyle.WithStyle(StyleOperator, this,
-                ("place-self", "center"),
-                ("grid-area", Id),
-                ("background-color", "cyan"),
-                ("user-select", "auto"),
-                ("margin", "2px 4px"),
-                ("padding", "0px 2px"),
-                ("border","2px solid"),
-                ("white-space","nowrap"));
+                ("grid-area", Id));
 
             WithAttribute("draggable", out AttributeString drag);
             drag.Value = "true";
@@ -56,6 +50,16 @@ namespace Blazoop.Source.ElementContexts
             AddEvent("ondrop", args => OnDrop(args));
             
             SetHtml("what");
+        }
+
+        public void Hover(bool isHovering)
+        {
+            WithAttribute("style", out StyleContext tabsStyle);
+            if (isHovering)
+            {
+                tabsStyle.WithStyle(StyleOperator, this,
+                    ("border", "2px solid red"));
+            }
         }
         
         public void SelectTab(bool selected)

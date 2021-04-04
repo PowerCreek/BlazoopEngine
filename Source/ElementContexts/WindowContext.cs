@@ -92,7 +92,11 @@ namespace Blazoop.Source.ElementContexts
 
         public void InitTitlebar(IRootElement nodeBase)
         {
-            Titlebar = new TitlebarContext(nodeBase);
+            Titlebar = new TitlebarContext(nodeBase)
+            {
+                WindowContext = this
+            };
+            
             ElementNode.Add(Titlebar.ElementNode);
             
             Titlebar.TitlebarMouseDown = args=>
@@ -104,6 +108,8 @@ namespace Blazoop.Source.ElementContexts
             {
                 WindowingService.WindowTitleBarUp(args, this);
             };
+            
+            
         }
         
         public void InitTabSection(IRootElement nodeBase)

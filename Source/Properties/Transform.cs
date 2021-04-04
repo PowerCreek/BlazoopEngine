@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Reflection;
 using Blazoop.ExternalDeps.Classes.ElementProps;
 using Blazoop.Source.Properties.Vector;
 
@@ -10,6 +11,7 @@ namespace Blazoop.Source.Properties
 
             private Size _size = new();
 
+            
             public Transform()
             {
                 Position = new();

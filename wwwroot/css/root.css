@@ -39,6 +39,39 @@
     position: relative;
     place-self: stretch;
     background-color: black;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, 20px);
+    justify-content: end;
+    border-bottom: 2px solid black;
+    overflow: hidden;
+}
+
+.window-titlebar-control{
+    position: relative;
+    background-color: gray;
+    padding: 2px;
+    border-bottom: 2px solid black;
+}
+
+.window-titlebar-control > div{
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    right: 0px;
+    border: 0px;
+    place-content: center;
+    display: grid;
+    align-items: center;
+    line-height: 1.2;
+}
+
+.window-tab{
+    place-self: center;
+    background-color: cyan;
+    user-select: auto;
+    margin: 2px 4px;
+    padding: 0px 2px;
+    white-space: nowrap;
 }
 
 .window-context{

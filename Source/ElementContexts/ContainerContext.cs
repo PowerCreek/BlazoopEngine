@@ -58,7 +58,8 @@ namespace Blazoop.Source.ElementContexts
             SliderTransform.OnMove = (transform1, position) =>
             {
                 sliderStyle.WithStyle(StyleOperator, Slider, 
-                    ("margin-top",$"{position.Y+ToolbarHeight}px"));
+                    ("margin-top",$"{position.Y+ToolbarHeight}px"),
+                    ("margin-left",$"{position.X}px"));
             };
             
             ToolbarTransform = new Transform();

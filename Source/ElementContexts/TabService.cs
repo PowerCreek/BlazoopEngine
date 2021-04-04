@@ -17,8 +17,9 @@ namespace Blazoop.Source.ElementContexts
         public Dictionary<object, string> ObjectTabMap = new();
 
         public Dictionary<string, (List<TabData> Group, List<TabData> Order)> TabGroupMap = new();
-        
         public (List<TabData> Group, List<TabData> Order) GetTabs(object obj) => TabGroupMap[ObjectTabMap[obj]];
+        
+        public Action OnTabMove { get; set; }
         
         public void UnjoinTabGroup(object obj)
         {
@@ -26,6 +27,7 @@ namespace Blazoop.Source.ElementContexts
             ObjectTabMap.Remove(obj);
             
             var tabs = TabGroupMap[guid];
+            foreach (var tab in TabGroupMap[guid].Group) tab.TabGroup = UNJOINED;
             
             TabGroupMap.Remove(guid);
             if (!TabGroupMap.TryAdd(UNJOINED, tabs))
@@ -33,6 +35,8 @@ namespace Blazoop.Source.ElementContexts
                 TabGroupMap[UNJOINED].Group.AddRange(tabs.Group);
                 TabGroupMap[UNJOINED].Order.InsertRange(0, tabs.Order);
             }
+            
+            OnTabMove?.Invoke();
         }
 
         public void CreateGroup(object obj) => ObjectTabMap.Add(obj, Guid.NewGuid().ToString());
@@ -53,6 +57,8 @@ namespace Blazoop.Source.ElementContexts
             
             tab.TabGroup = group;
             SetGridAreas(tab);
+            
+            OnTabMove?.Invoke();
         }
 
         public void SetGridAreas(TabData tab)
@@ -72,6 +78,8 @@ namespace Blazoop.Source.ElementContexts
             hold.Remove(placing);
             hold.Insert(hold.IndexOf(existing)+(before?0:1), placing);
             SetGridAreas(placing);
+            
+            OnTabMove?.Invoke();
         }
         
         public TabData CreateTab()
