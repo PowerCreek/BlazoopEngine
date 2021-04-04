@@ -21,23 +21,30 @@ namespace Blazoop.Source.ElementContexts
         
         public Action OnTabMove { get; set; }
         
+        /*
         public void UnjoinTabGroup(object obj)
         {
             string guid = ObjectTabMap[obj];
-            ObjectTabMap.Remove(obj);
             
             var tabs = TabGroupMap[guid];
-            foreach (var tab in TabGroupMap[guid].Group) tab.TabGroup = UNJOINED;
+            foreach (var tab in TabGroupMap[guid].Group.ToArray())
+            {
+                tab.DisconnectTab();
+                AddTabToGroup(UNJOINED, tab);
+            }
+            
+            ObjectTabMap.Remove(obj);
             
             TabGroupMap.Remove(guid);
             if (!TabGroupMap.TryAdd(UNJOINED, tabs))
             {
                 TabGroupMap[UNJOINED].Group.AddRange(tabs.Group);
-                TabGroupMap[UNJOINED].Order.InsertRange(0, tabs.Order);
+                TabGroupMap[UNJOINED].Order.AddRange(tabs.Order);
             }
             
             OnTabMove?.Invoke();
         }
+        */
 
         public void CreateGroup(object obj) => ObjectTabMap.Add(obj, Guid.NewGuid().ToString());
 
@@ -49,15 +56,19 @@ namespace Blazoop.Source.ElementContexts
                 TabGroupMap[tab.TabGroup].Order.Remove(tab);
             }
 
+            tab.TabGroup = group;
             if (!TabGroupMap.ContainsKey(group)) 
                 TabGroupMap.Add(group, (new List<TabData>(), new List<TabData>()));
             
             TabGroupMap[group].Group.Add(tab);
             TabGroupMap[group].Order.Add(tab);
+            if (tab.TabGroup is not UNJOINED)
+            {
+                SetGridAreas(tab);
+                SelectTab(tab);
+            }
             
-            tab.TabGroup = group;
-            SetGridAreas(tab);
-            
+            //SetGridAreas(tab);
             OnTabMove?.Invoke();
         }
 
@@ -74,11 +85,20 @@ namespace Blazoop.Source.ElementContexts
 
         public void InsertTab(TabData placing, TabData existing, bool before)
         {
+            if (placing == existing) return;
+            
+            if (placing.TabGroup is not null)
+            {
+                var placeList = TabGroupMap[placing.TabGroup].Group;
+                placeList.Remove(placing);
+            }
+            
             var hold = TabGroupMap[existing.TabGroup].Group;
+            
             hold.Remove(placing);
             hold.Insert(hold.IndexOf(existing)+(before?0:1), placing);
-            SetGridAreas(placing);
             
+            SetGridAreas(placing);
             OnTabMove?.Invoke();
         }
         
@@ -98,9 +118,9 @@ namespace Blazoop.Source.ElementContexts
             foreach (var item in items)
                 item.SelectTab(false);
             
-            items.Add(tab);
-            tab.SelectTab(true);
-            SetGridAreas(tab);
+            items.Add(tab);       
+            tab.SelectTab(true); 
+            SetGridAreas(tab);    
         }
 
     }

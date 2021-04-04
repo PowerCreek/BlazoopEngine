@@ -12,8 +12,9 @@ namespace Blazoop.Source.Operations
 {
     public class WindowingService : OperationBase
     {
-        
         public ContainerContext ContainerContext { get; set; }
+        
+        public WindowContext UnjoinedWindow { get; set; } 
 
         public Dictionary<object, WindowContext> WindowContextMap = new();
         
@@ -21,12 +22,13 @@ namespace Blazoop.Source.Operations
         public List<WindowContext> WindowRenderOrder = new();
         
         public TabService TabService { get; }
+        public DockService DockService { get; }
         
         public WindowingService(IJSRuntime jsRuntime) : base(jsRuntime)
         {
             TabService = new TabService();
+            DockService = new DockService();
         }
-
 
         public WindowContext CreateWindow
         {
@@ -34,7 +36,7 @@ namespace Blazoop.Source.Operations
             {
                 WindowContext windowContext = new WindowContext(ContainerContext.NodeBase);
                 ContainerContext.SlideMember.Add(RegisterWindow(windowContext).ElementNode);
-                ContainerContext.SurrogateReference?.ChangeState();
+                ContainerContext.Slider.SurrogateReference?.ChangeState();
                 TabService.CreateGroup(windowContext);
                 return windowContext;
             }
@@ -42,11 +44,22 @@ namespace Blazoop.Source.Operations
 
         public void RemoveWindow(WindowContext context)
         {
+            if (context == UnjoinedWindow) return;
+            
+            //TabService.UnjoinTabGroup(context);
+            TabService.TabGroupMap[TabService.ObjectTabMap[context]].Group.ToList()
+                .ForEach(tab => AddTabToWindow(UnjoinedWindow, tab));
+            
+            TabService.TabGroupMap.Remove(TabService.ObjectTabMap[context]);
+            TabService.ObjectTabMap.Remove(context);
+            
             WindowContextMap.Remove(context);
             WindowRenderOrder.Remove(context);
             context.ElementNode.Pop();
-            ContainerContext.SurrogateReference?.ChangeState();
-            TabService.UnjoinTabGroup(context);
+            context.Key += "_";
+            context.SurrogateReference?.ChangeState();
+            ContainerContext.Slider.SurrogateReference?.ChangeState();
+            TabService.OnTabMove?.Invoke();
         }
 
         public WindowContext RegisterWindow(WindowContext context)
@@ -77,11 +90,14 @@ namespace Blazoop.Source.Operations
 
         public void AddTabToWindow(WindowContext context, TabData tab)
         {
-            if(TabService.ObjectTabMap[context] == tab.TabGroup) return;
+            if (context is null)
+            {
+                return;
+            }
+            
+            if (TabService.ObjectTabMap[context] == tab.TabGroup) return;
             TabService.AddTabToGroup(TabService.ObjectTabMap[context], tab);
-            tab.DisconnectTab();
             tab.ConnectToWindow(context);
-            //context.ContentPane.ElementNode.Add(tab.Content.ElementNode);
             UpdateTabs(TabService.ObjectTabMap[context]);
         }
 
@@ -95,13 +111,27 @@ namespace Blazoop.Source.Operations
         public void RemoveTabFromWindow(TabData tab)
         {
             string previousGroup = tab.TabGroup;
-            
-            tab.DisconnectTab();
-            TabService.AddTabToGroup(TabService.UNJOINED, tab);
+            //tab.DisconnectTab();
+            //TabService.AddTabToGroup(TabService.UNJOINED, tab);
+            AddTabToWindow(UnjoinedWindow, tab);
             ((ElementContext)tab.TabContext.ElementNode.Parent.Value).SurrogateReference.ChangeState();
             
             UpdateTabs(previousGroup);
             //((ElementContext)tab.Content.ElementNode.Parent.Value).SurrogateReference.ChangeState();
+        }
+
+        public void CreateUnjoinedWindow()
+        {
+            WindowContext windowContext = new WindowContext(ContainerContext.NodeBase)
+            {
+                cssClass = "none"
+            };
+            
+            ContainerContext.SlideMember.Add(RegisterWindow(windowContext).ElementNode);
+            ContainerContext.Slider.SurrogateReference?.ChangeState();
+            TabService.ObjectTabMap.Add(windowContext, TabService.UNJOINED);
+            
+            UnjoinedWindow = windowContext;
         }
 
         public void SelectTab(TabData tab)
@@ -109,9 +139,7 @@ namespace Blazoop.Source.Operations
             if(tab is not null) TabService.SelectTab(tab);
         }
         
-        //REGION//REGION//REGION//REGION
-        
-        public void ContainerWheel(dynamic args)
+        public void OnContainerWheel(dynamic args)
         {
             
             if (LastCursor is not "") return;
@@ -120,20 +148,13 @@ namespace Blazoop.Source.Operations
 
             if (args.ShiftKey)
             {
+                StartWheelPos.X += amount;
                 ContainerContext.SliderTransform.Position.X += amount;
             }
             else
             {
-                ContainerContext.SliderTransform.Position.Y += amount;
-            }
-
-            if (args.ShiftKey)
-            {
-                StartWheelPos.X += amount;
-            }
-            else
-            {
                 StartWheelPos.Y += amount;
+                ContainerContext.SliderTransform.Position.Y += amount;
             }
 
             if (WindowDraggingWithTitlebar == null) return;
@@ -143,7 +164,7 @@ namespace Blazoop.Source.Operations
                 var position = WindowDraggingWithTitlebar.Transform.Position;
                 if (args.ShiftKey)
                 {
-                    position.X += amount;
+                    position.X -= amount;
                 }else
                 {
                     position.Y -= amount;
@@ -304,7 +325,7 @@ namespace Blazoop.Source.Operations
 
             CurrentScreenPos = BeforeScreenPos;
             
-            if (WindowDraggingWithTitlebar != null)
+            if (WindowDraggingWithTitlebar != null && LastCursor == "")
             {
                 WindowDraggingWithTitlebar.Transform.Position.X -= DeltaPos.X;
                 WindowDraggingWithTitlebar.Transform.Position.Y -= DeltaPos.Y;
@@ -541,14 +562,7 @@ namespace Blazoop.Source.Operations
         public void TabMouseDown(dynamic args, TabData tabdata)
         {
             int xTrim = 24 - (int) args.OffsetX;
-            /*
-            WindowStartPos = new Position(
-                tabdata.WindowSource.Transform.Position.X - xTrim,
-                tabdata.WindowSource.Transform.Position.Y - 34);
-                */
         }
-        
-        //REGION//REGION//REGION//REGION
     }
     
 }

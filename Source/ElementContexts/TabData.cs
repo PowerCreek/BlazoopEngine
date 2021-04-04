@@ -1,5 +1,6 @@
 ﻿using System;
 using Blazoop.ExternalDeps.Classes.Management;
+using Blazoop.Source.Operations;
 
 namespace Blazoop.Source.ElementContexts
 {
@@ -20,10 +21,12 @@ namespace Blazoop.Source.ElementContexts
         {
             TabContext?.ElementNode.Pop();
             Content?.ElementNode.Pop();
-            (TabContext?.ElementNode?.Parent?.Value as ElementContext)?.SurrogateReference?.ChangeState();
-            (Content?.ElementNode?.Parent?.Value as ElementContext)?.SurrogateReference?.ChangeState();
+            (TabContext?.ElementNode?.Parent?.Parent.Value as ElementContext)?.SurrogateReference?.ChangeState();
+            (Content?.ElementNode?.Parent?.Parent.Value as ElementContext)?.SurrogateReference?.ChangeState();
         }
 
+        private int iteration = 0;
+        
         public void ConnectToWindow(WindowContext context)
         {
             context.TabSection.ElementNode.Add(TabContext?.ElementNode);

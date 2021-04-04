@@ -100,11 +100,8 @@ namespace Blazoop.Source
         public void Add(LinkMember node)
         {
             if (this == node || IsAncestorOf(node)) return;
-            
             Mend(END.Prev, END, node);
-
             node.Parent = this;
-            
         }
 
         public void SetNext(LinkMember node) => Next = node;

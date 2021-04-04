@@ -135,19 +135,24 @@
     text-align: center;
     box-sizing: border-box;
     height: 40px;
-
+    border: 2px solid transparent;
 }
 
 .toolbar-menu-part>div:first-child{
-    height: 40px;    
+    height: 40px;
     box-sizing: border-box;
     display: grid;
     align-items: center;
-    margin-top: var(--down);
 }
 
-.toolbar-menu-part:hover{
-    --down: -2px;
-    background-color: #0a0a0a33;
-    border:2px solid gray;
+.toolbar-menu-part>div{
+    top: -2px;
+}
+
+.none{
+    display: none;
+}
+
+.dockzone{
+    z-index: 5;
 }

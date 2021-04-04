@@ -16,6 +16,8 @@ namespace Blazoop.Source.Operations
         
         public List<MenuPart> Menus = new();
         public MenuPart ActiveMenu { get; set; }
+        
+        public StyleOperator StyleOp { get; set; }
 
         public Dictionary<MenuPart, List<MenuItem>> Labels = new();
         
@@ -35,6 +37,11 @@ namespace Blazoop.Source.Operations
                 EmptyLink.Add(menuItem.ElementNode);
             }
             
+            menu.WithAttribute("style", out StyleContext styleContext);
+            styleContext.WithStyle(StyleOp, menu, 
+                ("background-color","none"),
+                ("border","2px solid transparent"));
+            
             menu.SurrogateReference?.ChangeState();
         }
         
@@ -48,6 +55,11 @@ namespace Blazoop.Source.Operations
                 menu.ElementNode.Add(menuItem.ElementNode);
                 menuItem.Key = $"show_{menuItem.Id}";
             }
+            
+            menu.WithAttribute("style", out StyleContext styleContext);
+            styleContext.WithStyle(StyleOp, menu, 
+                ("background-color","#0a0a0a33"),
+                ("border","2px solid gray"));
             
             menu.SurrogateReference?.ChangeState();
         }
@@ -106,9 +118,6 @@ namespace Blazoop.Source.Operations
             Labels[menu].Add(item);
         }
         
-        
-
-
         public TabData DragItem = null;
         public MenuItem TabItem = null;
         public void StartItemDrag(TabData tabData, MenuItem tabItem)
@@ -119,31 +128,76 @@ namespace Blazoop.Source.Operations
 
         public void DroppedTabItem(MenuPart menu, WindowingService windowingService, TabData tabData, MenuItem target)
         {
-            EmptyLink.Add(TabItem.ElementNode);
-            target.ElementNode.InsertAfter(TabItem.ElementNode);
-            List<MenuItem> items = Labels[menu];
-            items.Remove(TabItem);
-            items.Insert(items.IndexOf(target)+1, TabItem);
+            if (tabData == DragItem) return;
             
-            if (DragItem is null || tabData.TabGroup == DragItem.TabGroup) return;
+            EmptyLink.Add(TabItem.ElementNode);
+
+            Labels.Values.FirstOrDefault(e => e.Contains(TabItem));
+            
+            List<MenuItem> items = Labels[menu];
+
+            int item1 = items.IndexOf(TabItem);
+            int item2 = items.IndexOf(target);
+
+            items?.Remove(TabItem);
+
+            if (item2 is not -1)
+            {
+                if (item1 < item2)
+                {
+                    item1 = item2+1;
+                }
+                else
+                    item1 = item2;
+            }
+
+
+            WindowContext window =
+                windowingService.TabService.ObjectTabMap.FirstOrDefault(item => item.Value == tabData.TabGroup).Key as WindowContext;
+
+            if (DragItem is null || tabData.TabGroup == DragItem.TabGroup)
+            {
+                windowingService.UpdateTabs(tabData.TabGroup);
+                window?.TabSection.SurrogateReference?.ChangeState();
+                windowingService.TabService.InsertTab(DragItem, tabData, item1 <= item2);
+                OpenMenu(menu);
+                return;
+            }
             
             string previous = DragItem.TabGroup;
             
             WindowContext oldWindow =
                 windowingService.TabService.ObjectTabMap.FirstOrDefault(item => item.Value == DragItem.TabGroup).Key as WindowContext;
 
-            WindowContext window =
-                windowingService.TabService.ObjectTabMap.FirstOrDefault(item => item.Value == tabData.TabGroup).Key as WindowContext;
-
+            windowingService.RemoveTabFromWindow(DragItem);
             windowingService.AddTabToWindow(window, DragItem);
-            windowingService.TabService.InsertTab(DragItem, tabData, true);
-            windowingService.UpdateTabs(previous);
-            windowingService.UpdateTabs(tabData.TabGroup);
             
+            if (oldWindow is not null && windowingService.TabService.TabGroupMap[previous].Group.Count is 0)
+            {
+                windowingService.RemoveWindow(oldWindow);
+                previous = TabService.UNJOINED;
+            }
+
+            windowingService.TabService.InsertTab(DragItem, tabData, item1 < item2);
+
+           if (previous is not TabService.UNJOINED)
+           { 
+               windowingService.UpdateTabs(previous);
+           }
+
+           if (window?.TabSection is not null)
+           {
+               window.Key = Guid.NewGuid().ToString();
+               window.TabSection.Key = Guid.NewGuid().ToString();
+               foreach (var linkMember in window.TabSection.ElementNode.GetChildren())
+               {
+                   (linkMember.Value as ElementContext).Key = Guid.NewGuid().ToString();
+               }
+           }
+
             window?.TabSection.SurrogateReference?.ChangeState();
             oldWindow?.TabSection.SurrogateReference?.ChangeState();
-            if (oldWindow is not null && windowingService.TabService.TabGroupMap[previous].Group.Count is 0) windowingService.RemoveWindow(oldWindow);
-            
+            OpenMenu(menu);
         }
 
         public void EndItemDrag()

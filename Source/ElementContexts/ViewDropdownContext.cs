@@ -20,11 +20,14 @@ namespace Blazoop.Source.ElementContexts
         public ViewDropdownContext(IRootElement nodeBase) : base($"ViewBar_{nodeBase.NodeBase.Id}_")
         {
             cssClass = "window-container-toolbar";
-            
-            ToolbarOperator = nodeBase.ServiceData.OperationManager.GetOperation<ToolbarOperator>();
-            WindowingService = nodeBase.ServiceData.OperationManager.GetOperation<WindowingService>();
 
             StyleOperator = nodeBase.ServiceData.OperationManager.GetOperation<StyleOperator>();
+            
+            ToolbarOperator = nodeBase.ServiceData.OperationManager.GetOperation<ToolbarOperator>();
+            ToolbarOperator.StyleOp = StyleOperator;
+            
+            WindowingService = nodeBase.ServiceData.OperationManager.GetOperation<WindowingService>();
+
             Add("node", ElementNode = new LinkMember(this));
             
             var TestMenu = ToolbarOperator.CreateMenu("File", StyleOperator);
@@ -74,50 +77,56 @@ namespace Blazoop.Source.ElementContexts
             tabItem.StopPropagations.Add("ondragover");
             tabItem.StopPropagations.Add("ondrop");
 
-            tabItem.AddEvent("ondragstart", o => { ToolbarOperator.StartItemDrag(tabData, tabItem); });
+            tabItem.AddEvent("ondragstart", o =>
+            {
+                ToolbarOperator.StartItemDrag(tabData, tabItem);
+            });
 
             tabItem.AddEvent("ondrop", o =>
             {
                 ToolbarOperator.DroppedTabItem(menu, WindowingService, tabData, tabItem);
-                ToolbarOperator.EndItemDrag();
-                ToolbarOperator.OpenMenu(menu);                
+                ToolbarOperator.EndItemDrag();   
             });
 
-            tabItem.AddEvent("onmouseenter", (o => { tabData.TabContext.Hover(true); }));
+            tabItem.AddEvent("onmouseenter", (o =>
+            {
+                if (tabData.TabGroup is TabService.UNJOINED)
+                    return;
+                
+                tabData.TabContext.Hover(true);
+            }));
 
             tabItem.AddEvent("onmouseleave", (o =>
             {
+                if (tabData.TabGroup is TabService.UNJOINED)
+                    return;
+
                 tabData.TabContext.Hover(false);
                 WindowingService.UpdateTabs(tabData.TabGroup);
             }));
 
-            if (tabData.TabGroup is TabService.UNJOINED)
-            {
-                tabItem.AddEvent("onclick", o =>
-                {
-                    var window = WindowingService.CreateWindow;
-                    WindowingService.AddTabToWindow(window, tabData);
-                    window.Transform.Position = new Position().Subtract<Position>(WindowingService.ContainerContext.SliderTransform.Position);
-                });
-            }
-            else
-            {
-                tabItem.AddEvent("onclick", o =>
-                {
-                    WindowContext window = WindowingService.TabService.ObjectTabMap.FirstOrDefault(item => item.Value == tabData.TabGroup).Key as WindowContext;
-
-                    if (window is null) return;
-
-                    WindowingService.ContainerContext.SliderTransform.Position = new Position().Subtract<Position>(window.Transform.Position);
-
-                    WindowingService.WindowToFront(window);
-                });
-            }
-
             tabItem.AddEvent("onclick", (o =>
             {
+                WindowContext window = null;
+                
+                if (tabData.TabGroup is TabService.UNJOINED)
+                {
+                    Console.WriteLine("here");
+                    window = WindowingService.CreateWindow;
+                    WindowingService.AddTabToWindow(window, tabData);
+                    window.Transform.Position = new Position().Subtract<Position>(WindowingService.ContainerContext.SliderTransform.Position);
+                }
+                else
+                {
+                    window = WindowingService.TabService.ObjectTabMap.FirstOrDefault(item => item.Value == tabData.TabGroup).Key as WindowContext;
+                    if (window is null) return;
+                    WindowingService.ContainerContext.SliderTransform.Position = new Position().Subtract<Position>(window.Transform.Position);
+                }
+                
                 WindowingService.SelectTab(tabData);
                 WindowingService.UpdateTabs(tabData.TabGroup);
+                WindowingService.WindowToFront(window);
+                WindowingService.ContainerContext.Slider.SurrogateReference?.ChangeState();
             }));
         }
 
@@ -131,7 +140,12 @@ namespace Blazoop.Source.ElementContexts
 
             foreach ((string key, var tabs) in WindowingService.TabService.TabGroupMap)
             {
-                var viewTabItem = ToolbarOperator.CreateItem(menu, key);
+                string label = key;
+                if (key is TabService.UNJOINED) label = "None";
+                
+                var viewTabItem = ToolbarOperator.CreateItem(menu, label);
+                //.SetHtml(label);
+                
                 viewTabItem.cssClass += " vslim";
                 viewTabItem.SurrogateReference?.ChangeState();
 
