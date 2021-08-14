@@ -257,9 +257,11 @@ namespace Blazoop.Source.Operations
             AddTabToWindow(windowContext, TabDragData);
             UpdateTabs(oldGroup);
             UpdateTabs(TabDragData.TabGroup);
-
+            
             windowContext.TabSection.SurrogateReference?.ChangeState();
+            windowContext.ContentPane.SurrogateReference?.ChangeState();
             currentWindow.TabSection.SurrogateReference?.ChangeState();
+            currentWindow.ContentPane.SurrogateReference?.ChangeState();
             
             WindowToFront(windowContext);
             
@@ -306,7 +308,10 @@ namespace Blazoop.Source.Operations
             UpdateTabs(tabTarget.TabGroup);
             
             targetWindow.TabSection.SurrogateReference?.ChangeState();
+            targetWindow.ContentPane.SurrogateReference?.ChangeState();
             currentWindow.TabSection.SurrogateReference?.ChangeState();
+            currentWindow.ContentPane.SurrogateReference?.ChangeState();
+            
 
             if (TabService.TabGroupMap[oldGroup].Group.Count is 0) RemoveWindow(currentWindow);
         }

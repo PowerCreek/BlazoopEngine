@@ -15,7 +15,7 @@ namespace Blazoop.ExternalDeps.Classes.Management
         public OperationManager OperationManager { get; }
         public ServiceData(OperationManager operationManager)
         {
-            OperationManager = operationManager;
+            OperationManager = operationManager;            
         }
         
     }
